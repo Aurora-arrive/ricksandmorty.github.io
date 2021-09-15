@@ -24,7 +24,7 @@
 
   
 
-  <title>数学建模 | 林深时见鹿</title>
+  <title>B树和B+树的基础知识和基本操作 | 林深时见鹿</title>
 
   
 
@@ -47,7 +47,7 @@
 <!-- header container -->
 <header class="header-container post">
   
-    <div class="post-image" style="background-image: url(https://qiniu.sukoshi.xyz/src/images/68135789_p0.jpg)"></div>
+    <div class="post-image" style="background-image: url(https://cloud.miiiku.xyz/src/images/cover/cover-08.jpg)"></div>
   
 
   <!-- navbar -->
@@ -98,20 +98,18 @@
     <div class="header-content">
       <div class="post-text layout-block">
         <div class="layout-margin">
-          <h1 class="title-wrap">数学建模</h1>
+          <h1 class="title-wrap">B树和B+树的基础知识和基本操作</h1>
           <h2 class="title-sub-wrap">
             <strong>何绍辉</strong>
             <span>发布于</span>
-            <time  class="article-date" datetime="2021-09-04T09:39:00.000Z" itemprop="datePublished">2021-09-04</time>
+            <time  class="article-date" datetime="2021-09-15T15:10:48.000Z" itemprop="datePublished">2021-09-15</time>
           </h2>
           <ul class="wrap-list dark">
-  
-    <li><a href="/categories/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/">📒 数学建模</a></li>
   
 </ul>
           <ul class="wrap-list dark">
   
-    <li><a href="/tags/matlab%E5%AF%B9Excel%E8%A1%A8%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE/">🏷️ matlab对Excel表读取数据</a></li>
+    <li><a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">🏷️ 数据结构</a></li>
   
 </ul>
         </div>
@@ -135,41 +133,78 @@
       
       
       <section class="article-entry markdown-body layout-margin content-padding--large soft-size--large soft-style--box">
-        <h2 id="1-用xlread函数读取一个Excel文件"><a href="#1-用xlread函数读取一个Excel文件" class="headerlink" title="1.用xlread函数读取一个Excel文件"></a>1.用xlread函数读取一个Excel文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(1) $ num = xlread(filename)</span><br></pre></td></tr></table></figure>
-
-<p>filename是单引号括起来的带路径的文件名，函数直接读取filename所指文件的sheet1中的数据区域存储到双精度矩阵num中</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(2) $ num = xlread(filename,-1)</span><br></pre></td></tr></table></figure>
-
-<p>输入后matlab将会打开相应的excel文件，用鼠标选择需要导入的数据区域，可以切换到想要的sheet。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(3) $ num = xlread(filename,sheet)</span><br></pre></td></tr></table></figure>
-
-<p>其中sheet用来指定读入excel文件的第几个sheet，此时的sheet取值大于1的整数。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(4) $ num = xlread(filename,sheet,<span class="string">&#x27;range&#x27;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>其中range指定一个矩形的区域，用单引号括起来；例如：’D2:H4’代表以D2和H4为对角定点的矩形域;</p>
-<h2 id="2-用xlwrite函数写入一个excel文件"><a href="#2-用xlwrite函数写入一个excel文件" class="headerlink" title="2.用xlwrite函数写入一个excel文件"></a>2.用xlwrite函数写入一个excel文件</h2><p><strong>以矩阵A=[1 2 3 4;5 6 7 8]为例进行介绍</strong></p>
-<p>(1) 将数据输入到指定EXCEL中，不指定工作薄，不指定单元格位置</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ xlswrite(<span class="string">&#x27;1.xlsx&#x27;</span>,A)</span><br></pre></td></tr></table></figure>
-
-<p>(2) 将数据输入到指定sheet中，不指定单元</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ xlswrite(<span class="string">&#x27;1.xlsx&#x27;</span>,A,2)</span><br></pre></td></tr></table></figure>
-
+        <h1 id="B树和B-树"><a href="#B树和B-树" class="headerlink" title="B树和B+树"></a>B树和B+树</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><pre><code>我们都知道二叉查找树的查找的时间复杂度是Ｏ(log N)，其查找效率已经足够高了，那为什么还有Ｂ树和Ｂ＋树的出现呢？难道它两的时间复杂度比二叉查找树还小吗？
+</code></pre>
+<p>　　答案当然不是，Ｂ树和Ｂ＋树的出现是因为另外一个问题，那就是磁盘Ｉ/Ｏ；众所周知，Ｉ/Ｏ操作的效率很低，那么，当在大量数据存储中，查询时我们不能一下子将所有数据加载到内存中，只能逐一加载磁盘页，每个磁盘页对应树的节点。造成大量磁盘Ｉ/Ｏ操作（最坏情况下为树的高度）。平衡二叉树由于树深度过大而造成磁盘IO读写过于频繁，进而导致效率低下。<br>　　所以，我们为了减少磁盘ＩＯ的次数，就你必须降低树的深度，将“瘦高”的树变得“矮胖”。一个基本的想法就是：<br>　　（1）<strong>每个节点存储多个元素</strong><br>　　（2）<strong>摒弃二叉树结构，采用多叉树</strong></p>
 <ul>
-<li>注意这里的’2’是将A矩阵输入到第二个sheet中，而不一定是sheet2</li>
+<li><p>引自<a target="_blank" rel="noopener" href="https://blog.csdn.net/z_ryan/article/details/79685072%EF%BC%8C%E6%88%91%E8%A7%89%E5%BE%97%E8%AF%B4%E7%9A%84%E5%BE%88%E5%A5%BD%E3%80%82">https://blog.csdn.net/z_ryan/article/details/79685072，我觉得说的很好。</a></p>
+<hr>
+</li>
 </ul>
-<p>(3) 将数据写入到指定sheet,指定位置</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ xlswrite(<span class="string">&#x27;1.xlsx&#x27;</span>,A,3,<span class="string">&#x27;C5:F6&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="一-B树（或者说B-树）"><a href="#一-B树（或者说B-树）" class="headerlink" title="一.B树（或者说B-树）"></a>一.B树（或者说B-树）</h2><h3 id="1-B数的的定义"><a href="#1-B数的的定义" class="headerlink" title="1.B数的的定义"></a>1.B数的的定义</h3><p>B树也称B-树,它是一颗多路平衡查找树。我们描述一颗B树时需要指定它的阶数，阶数表示了一个结点最多有多少个孩子结点，一般用字母m表示阶数。当m取2时，就是我们常见的<strong>二叉搜索树</strong>。</p>
+<p>一颗m阶的B树定义如下：</p>
+<p>1）每个结点最多有m-1个关键字。</p>
+<p>2）根结点最少可以只有1个关键字。</p>
+<p>3）非根结点至少有Math.ceil(m/2)-1个关键字。（即2/m向上取整-1）</p>
+<p>4）每个结点中的关键字都按照从小到大的顺序排列，每个关键字的左子树中的所有关键字都小于它，而右子树中的所有关键字都大于它。</p>
+<p>5）所有叶子结点都位于同一层，或者说根结点到每个叶子结点的长度都相同</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总结一下：根节点的关键字范围为[1,m-1]; 非根节点的关键字范围为[⌈2/m⌉-1,m-1]</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li>在这里可以直接指定输入单元格的起始位置，如’C5’</li>
-<li>或者也可以指定完整的范围’C5:F6’</li>
-</ul>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/1.png"></p>
+<p>上图是一颗阶数为4的B树，B树的每个结点中存储了关键字（key）和关键字对应的数据（data），以及孩子结点的指针。</p>
+<h3 id="2-B数的插入"><a href="#2-B数的插入" class="headerlink" title="2.B数的插入"></a>2.B数的插入</h3><p>B数插入操作的流程如下：</p>
+<p>1）根据要插入的key的值，找到叶子结点并插入。</p>
+<p>2）判断当前结点key的个数是否小于等于m-1，若满足则结束，否则进行第3步。</p>
+<p>3）<strong>以结点中间的key为中心分裂成左右两部分，然后将这个中间的key插入到父结点中，这个key的左子树指向分裂后的左半部分，这个key的右子支指向分裂后的右半部分，</strong>然后将当前结点指向父结点，继续进行第3步。</p>
+<p>下面以5阶B树为例，我只介绍一下最关键的插入后的分裂操作</p>
+<hr>
+<p>（a）假如此时根节点有4个关键字</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/2.png" alt="image-20210915235426128"></p>
+<hr>
+<p>（b）继续插入关键字53</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/3.png" alt="image-20210915235638073"></p>
+<p>插入后超过了最大允许的关键字个数4，所以以key值为41为中心进行分裂，结果如下图所示，分裂后当前结点指针指向父结点，满足B树条件，插入操作结束。</p>
+<p>当阶数m为偶数时，需要分裂时就不存在排序恰好在中间的key，那么我们选择中间位置的前一个key或中间位置的后一个key为中心进行分裂即可</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/4.png" alt="image-20210916000628325"></p>
+<h3 id="3-B树的删除"><a href="#3-B树的删除" class="headerlink" title="3.B树的删除"></a>3.B树的删除</h3><p>1）如果当前需要删除的key位于非叶子结点上，则用后继key（这里的后继key均指后继记录的意思）覆盖要删除的key，然后在后继key所在的子支中删除该后继key。此时后继key一定位于叶子结点上，这个过程和二叉搜索树删除结点的方式类似。删除这个记录后执行第2步</p>
+<p>2）该结点key个数大于等于Math.ceil(m/2)-1，结束删除操作，否则执行第3步。</p>
+<p>3）如果兄弟结点key个数大于Math.ceil(m/2)-1，则父结点中的key下移到该结点，兄弟结点中的一个key上移，删除操作结束。</p>
+<p>否则，将父结点中的key下移与当前结点及它的兄弟结点中的key合并，形成一个新的结点。原父结点中的key的两个孩子指针就变成了一个孩子指针，指向这个新结点。然后当前结点的指针指向父结点，重复上第2步。</p>
+<hr>
+<p>下面以5阶B树为例，介绍B树的删除操作，5阶B树中，结点最多有4个key,最少有2个key</p>
+<p>（a）原始状态</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/5.png" alt="image-20210916001744980"></p>
+<p>(b)删除关键字27</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/6.png" alt="image-20210916001949235"></p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/7.png" alt="image-20210916002122050"></p>
+<p>（c）删除关键字32</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/8.png" alt="image-20210916002215294"></p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/9.png" alt="image-20210916002248366"></p>
+<h2 id="二-B-树"><a href="#二-B-树" class="headerlink" title="二.B+树"></a>二.B+树</h2><p><u>B+树相对于B树来说，最大的改动就是把存储值的节点全部放在了叶子节点，也就是说索引节点是不存值的，这样有什么好处呢，我们可以看到，叶子节点最后形成了一个有序的链表。</u></p>
+<h3 id="1-B-树的定义"><a href="#1-B-树的定义" class="headerlink" title="1.B+树的定义"></a>1.B+树的定义</h3><p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/10.png" alt="image-20210916002643247"></p>
+<p>1）B+树包含2种类型的结点：内部结点（也称索引结点）和叶子结点。根结点本身即可以是内部结点，也可以是叶子结点。根结点的关键字个数最少可以只有1个。</p>
+<p>2）B+树与B树最大的不同是内部结点不保存数据，只用于索引，所有数据（或者说记录）都保存在叶子结点中。</p>
+<p>3） m阶B+树表示了内部结点最多有m-1个关键字（或者说内部结点最多有m个子树），阶数m同时限制了叶子结点最多存储m-1个记录。</p>
+<p>4）内部结点中的key都按照从小到大的顺序排列，对于内部结点中的一个key，左树中的所有key都<strong>小于</strong>它，右子树中的key都<strong>大于等于</strong>它。叶子结点中的记录也按照key的大小排列。</p>
+<p>5）每个叶子结点都存有相邻叶子结点的指针，叶子结点本身依关键字的大小自小而大顺序链接。</p>
+<h3 id="2-B-树的插入"><a href="#2-B-树的插入" class="headerlink" title="2.B+树的插入"></a>2.B+树的插入</h3><p>下面是一颗5阶B树的插入过程，5阶B数的结点最少2个key，最多4个key。</p>
+<hr>
+<p>(a)原始状态</p>
+<p>之所以图中有两个10是因为一个起索引作用，一个起存储作用</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/11.png" alt="image-20210916003138667"></p>
+<p>(b)插入关键字18</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/Myblog\source_posts\B树和B-树的基础知识和基本操作\12.png" alt="image-20210916003222168"></p>
+<p>此时要分裂成两个结点，左结点2个记录，右结点3个记录，关键字16进位到父结点（索引类型）中，将当前结点的指针指向父结点。</p>
+<p><img src="/2021/09/15/B%E6%A0%91%E5%92%8CB-%E6%A0%91%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/13.png" alt="image-20210916003512227"></p>
+<h3 id="3-B-树的删除"><a href="#3-B-树的删除" class="headerlink" title="3.B+树的删除"></a>3.B+树的删除</h3><p>B+树的删除操作与B树类似，不再赘述。</p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/nullzx/p/8729425.html">https://www.cnblogs.com/nullzx/p/8729425.html</a></p>
 
       </section>
 
       
       
         <nav class="article-nav">
+          
           
             <div class="article-nav-item layout-padding">
   <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
@@ -180,23 +215,6 @@
       
         <a href="/2021/09/13/%E5%BB%BA%E6%A8%A1%E5%9B%BD%E8%B5%9B%E7%BB%93%E6%9D%9F%E5%90%8E%E7%9A%84%E4%B8%80%E4%BA%9B%E6%84%9F%E6%82%9F/" itemprop="url">
           <h2 class="card-text--title text-ellipsis">建模国赛结束后的一些感悟</h2>
-        </a>
-      
-      <div class="card-text--row">Newer</div>
-    </div>
-  </article>
-</div>
-          
-          
-            <div class="article-nav-item layout-padding">
-  <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
-    
-      <div class="card-cover" background-image-lazy data-img="https://qiniu.sukoshi.xyz/attach/2021/07/12/kagome.jpeg@webp"></div>
-    
-    <div class="card-text">
-      
-        <a href="/2021/09/01/helloworld/" itemprop="url">
-          <h2 class="card-text--title text-ellipsis">我是何同学，这是我的第一遍文章</h2>
         </a>
       
       <div class="card-text--row">Older</div>
@@ -257,18 +275,6 @@
 </section>
 
       
-<section class="widget-toc widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-title">
-    <svg class="icon icon-toc" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M134.50666666 767.46666668H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.23999999v50.13333333c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H134.50666666c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.13333333c0.10666668-27.73333333 22.50666668-50.24000001 50.24000001-50.24000001zM84.37333332 541.65333333h326.18666669c27.73333333 0 50.24000001 22.39999999 50.23999999 50.13333334v50.24000001c0 27.73333333-22.50666668 50.24000001-50.24000002 50.23999999H84.37333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.23999999v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333334zM134.50666666 315.83999999H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.24000001v50.24000001c0 27.73333333-22.50666668 50.13333334-50.24000001 50.13333333H134.50666666c-27.73333333 0-50.24000001-22.39999999-50.23999999-50.13333333v-50.24000001c0.10666668-27.84000001 22.50666668-50.24000001 50.24000001-50.23999999zM209.81333332 89.91999999h326.18666671c27.73333333 0 50.24000001 22.39999999 50.23999997 50.13333335v50.23999999c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H209.81333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333333zM692.05333333 623.36l274.66666669 176.00000002c23.36000001 14.93333333 30.08 45.97333334 15.14666666 69.33333332L954.77333334 910.93333333c-14.93333333 23.25333334-45.97333334 30.08-69.33333335 15.14666667l-274.66666666-176c-23.36000001-14.93333333-30.08-45.97333334-15.14666667-69.33333333l27.09333334-42.24000001c14.93333333-23.36000001 46.08000001-30.08 69.33333333-15.14666666z" fill="currentColor"></path>
-</svg>
-    <span>TOC</span>
-  </div>
-  <div class="widget-body">
-    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%94%A8xlread%E5%87%BD%E6%95%B0%E8%AF%BB%E5%8F%96%E4%B8%80%E4%B8%AAExcel%E6%96%87%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">1.用xlread函数读取一个Excel文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E7%94%A8xlwrite%E5%87%BD%E6%95%B0%E5%86%99%E5%85%A5%E4%B8%80%E4%B8%AAexcel%E6%96%87%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">2.用xlwrite函数写入一个excel文件</span></a></li></ol>
-  </div>
-</section>
-
 
       
 <section class="widet-notice widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
